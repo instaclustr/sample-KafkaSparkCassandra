@@ -34,12 +34,15 @@ object KafkaSparkCassandra {
 
   def main(args: Array[String]) {
 
-    // environment specific values
-    val kafka_broker = "<spark client IP:9092"
+    // read the configuration file
+    val sparkConf = new SparkConf().setAppName("KafkaSparkCassandra")
+
+    // get the values we need out of the config file
+    val kafka_broker = "localhost:9092"
     val kafka_topic = "test"
-    val cassandra_host = "<private IP of a cassandra node>" //cassandra host
-    val cassandra_user = "iccassandra"
-    val cassandra_pass = "<iccassandra password>"
+    val cassandra_host = sparkConf.get("spark.cassandra.connection.host"); //cassandra host
+    val cassandra_user = sparkConf.get("spark.cassandra.auth.username");
+    val cassandra_pass = sparkConf.get("spark.cassandra.auth.password");
 
     // connect directly to Cassandra from the driver to create the keyspace
     val cluster = Cluster.builder().addContactPoint(cassandra_host).withCredentials(cassandra_user, cassandra_pass).build()
@@ -50,7 +53,6 @@ object KafkaSparkCassandra {
     session.close()
 
     // Create spark streaming context with 5 second batch interval
-    val sparkConf = new SparkConf().setAppName("KafkaSparkCassandra")
     val ssc = new StreamingContext(sparkConf, Seconds(5))
 
     // create a timer that we will use to stop the processing after 30 seconds so we can print some results
@@ -72,11 +74,12 @@ object KafkaSparkCassandra {
     // it will then run once for each batch interval
 
     // Get the lines, split them into words, count the words and print
-    val lines = messages.map(_._2) // split the into lines
-    val wordsTmp = lines.flatMap(_.split(" ")) //split into words
-    val words = wordsTmp.filter(word => (word.length() > 0)) // remove any empty words caused by double spaces
-    val wordCountsTmp = words.map(x => (x, 1L)).reduceByKey(_ + _) // count by word
-    val wordCounts = wordCountsTmp.map({case (w,c) => (w,new Date().getTime(),c)}) // add the current time to the tuple for saving
+    val wordCounts = messages.map(_._2) // split the into lines
+      .flatMap(_.split(" ")) //split into words
+      .filter(w => (w.length() > 0)) // remove any empty words caused by double spaces
+      .map(w => (w, 1L)).reduceByKey(_ + _) // count by word
+      .map({case (w,c) => (w,new Date().getTime(),c)}) // add the current time to the tuple for saving
+
     wordCounts.print() //print it so we can see something is happening
 
     // insert the records from  rdd to the ic_example.word_count table in Cassandra
@@ -94,6 +97,7 @@ object KafkaSparkCassandra {
     val csc = new CassandraSQLContext(sc) // wrap the base context in a Cassandra SQL context
     val rdd1 = csc.sql("SELECT * from ic_example.word_count") // select the data from the table
     rdd1.show(100) // print the first 100 records from the result
+    sc.stop()
 
   }
 }
