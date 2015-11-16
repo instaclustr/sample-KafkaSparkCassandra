@@ -8,4 +8,4 @@ This sample has been built with the following versions:
 - Spark Cassandra Connector 1.4.0
 - Cassandra 2.1.11
 
-For detailed step on setting up and running this sample see the tutorial: https://support.instaclustr.com/hc/en-us/articles/213663858
+For a detailed, step by step guide on setting up and running this sample see the tutorial: https://support.instaclustr.com/hc/en-us/articles/213663858
