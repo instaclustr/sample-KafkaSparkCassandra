@@ -74,7 +74,7 @@ object KafkaSparkCassandra {
     // it will then run once for each batch interval
 
     // Get the lines, split them into words, count the words and print
-    val wordCounts = messages.map(_._2) // split the into lines
+    val wordCounts = messages.map(_._2) // split the message into lines
       .flatMap(_.split(" ")) //split into words
       .filter(w => (w.length() > 0)) // remove any empty words caused by double spaces
       .map(w => (w, 1L)).reduceByKey(_ + _) // count by word
@@ -91,6 +91,7 @@ object KafkaSparkCassandra {
     ssc.start() // start the streaming context
     timer.start() // start the thread that will stop the context processing after a while
     ssc.awaitTermination() // block while the context is running (until it's stopped by the timer)
+    ssc.stop() // this additional stop seems to be required
 
     // Get the results using spark SQL
     val sc = new SparkContext(sparkConf) // create a new spark core context
