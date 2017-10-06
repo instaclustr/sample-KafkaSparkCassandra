@@ -16,3 +16,7 @@ libraryDependencies += "org.apache.spark" %% "spark-streaming" % "2.1.1" % "prov
 
 libraryDependencies += ("org.apache.spark" %% "spark-streaming-kafka" % "1.6.3").exclude("org.spark-project.spark", "unused")
 
+assemblyMergeStrategy in assembly := {
+ case PathList("META-INF", xs @ _*) => MergeStrategy.discard
+ case x => MergeStrategy.first
+}
