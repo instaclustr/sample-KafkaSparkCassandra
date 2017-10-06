@@ -14,5 +14,5 @@ libraryDependencies += ("com.datastax.cassandra" % "cassandra-driver-core" % "3.
 
 libraryDependencies += "org.apache.spark" %% "spark-streaming" % "2.1.1" % "provided"
 
-libraryDependencies += ("org.apache.spark" %% "spark-streaming-kafka" % "2.1.1").exclude("org.spark-project.spark", "unused")
+libraryDependencies += ("org.apache.spark" %% "spark-streaming-kafka" % "1.6.3").exclude("org.spark-project.spark", "unused")
 
