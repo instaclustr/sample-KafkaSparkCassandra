@@ -10,7 +10,7 @@ libraryDependencies += "org.apache.spark" %% "spark-sql" % "2.1.1" % "provided"
 
 libraryDependencies += ("com.datastax.spark" %% "spark-cassandra-connector" % "2.0.1").exclude("io.netty", "netty-handler")
 
-libraryDependencies += ("com.datastax.cassandra" % "cassandra-driver-core" % "3.0.0").exclude("io.netty", "netty-handler")
+libraryDependencies += ("com.datastax.cassandra" % "cassandra-driver-core" % "3.3.0").exclude("io.netty", "netty-handler")
 
 libraryDependencies += "org.apache.spark" %% "spark-streaming" % "2.1.1" % "provided"
 
