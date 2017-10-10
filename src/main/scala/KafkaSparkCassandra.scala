@@ -12,7 +12,6 @@ import org.apache.spark.SparkContext._
 
 // Spark SQL Cassandra imports
 import org.apache.spark.sql
-import org.apache.spark.sql.cassandra.CassandraSQLContext
 import org.apache.spark.sql.cassandra._
 import com.datastax.spark.connector._
 
