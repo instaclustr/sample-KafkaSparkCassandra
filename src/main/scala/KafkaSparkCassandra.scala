@@ -94,7 +94,7 @@ object KafkaSparkCassandra {
 
     // Get the results using spark SQL
     val sc = new SparkContext(sparkConf) // create a new spark core context
-    val rdd1 = sc.cassandraTable("word_count","ic_examples")
+    val rdd1 = sc.cassandraTable("ic_example", "word_count")
     rdd1.take(100).foreach(println)
     sc.stop()
 
