@@ -12,7 +12,6 @@ import org.apache.spark.SparkContext._
 
 // Spark SQL Cassandra imports
 import org.apache.spark.sql
-import org.apache.spark.sql.cassandra.CassandraSQLContext
 import org.apache.spark.sql.cassandra._
 import com.datastax.spark.connector._
 
@@ -95,9 +94,8 @@ object KafkaSparkCassandra {
 
     // Get the results using spark SQL
     val sc = new SparkContext(sparkConf) // create a new spark core context
-    val csc = new CassandraSQLContext(sc) // wrap the base context in a Cassandra SQL context
-    val rdd1 = csc.sql("SELECT * from ic_example.word_count") // select the data from the table
-    rdd1.show(100) // print the first 100 records from the result
+    val rdd1 = sc.cassandraTable("ic_example", "word_count")
+    rdd1.take(100).foreach(println)
     sc.stop()
 
   }
