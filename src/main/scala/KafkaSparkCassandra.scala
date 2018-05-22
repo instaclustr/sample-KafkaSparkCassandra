@@ -7,6 +7,9 @@
 
 
 // Basic Spark imports
+import java.io.FileReader
+import java.util.Properties
+
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.SparkContext._
 
@@ -37,7 +40,6 @@ object KafkaSparkCassandra {
     val sparkConf = new SparkConf().setAppName("KafkaSparkCassandra")
 
     // get the values we need out of the config file
-    val kafka_broker = "localhost:9092"
     val kafka_topic = "test"
     val cassandra_host = sparkConf.get("spark.cassandra.connection.host"); //cassandra host
     val cassandra_user = sparkConf.get("spark.cassandra.auth.username");
@@ -64,7 +66,9 @@ object KafkaSparkCassandra {
 
     // Create direct kafka stream with brokers and topics
     val topicsSet = Set[String] (kafka_topic)
-    val kafkaParams = Map[String, String]("metadata.broker.list" -> kafka_broker)
+    val kafkaProps = new Properties()
+    kafkaProps.load(new FileReader("kafka.properties"))
+    val kafkaParams = kafkaProps.toMap[String, String]
     val messages = KafkaUtils.createDirectStream[String, String, StringDecoder, StringDecoder](
       ssc, kafkaParams, topicsSet)
 
