@@ -8,6 +8,7 @@
 
 import java.io.FileReader
 import java.util.Properties
+
 import scala.collection.JavaConversions._
 
 // Basic Spark imports
@@ -37,7 +38,6 @@ object KafkaSparkCassandra {
     // read the configuration file
     val sparkConf = new SparkConf().setAppName("WordCount")
 
-
     // get the values we need out of the config file
     val cassandra_host = sparkConf.get("spark.cassandra.connection.host"); //cassandra host
     val cassandra_user = sparkConf.get("spark.cassandra.auth.username")
@@ -55,7 +55,7 @@ object KafkaSparkCassandra {
     val ssc = new StreamingContext(sparkConf, Seconds(5))
 
     // Set the logging level to reduce log message spam
-    ssc.sparkContext.setLogLevel("ERROR")
+//    ssc.sparkContext.setLogLevel("ERROR")
 
     // create a timer that we will use to stop the processing after 60 seconds so we can print some results
     val timer = new Thread() {
@@ -87,9 +87,6 @@ object KafkaSparkCassandra {
       .map({case (w,c) => (w,new Date().getTime,c)}) // add the current time to the tuple for saving
 
     wordCounts.print() //print it so we can see something is happening
-
-    // Specify the structure of each word count object so it can be saved to Cassandra
-//    case class WordCount(word:String,ts:Long,count:Int)
 
     // Save each RDD to the ic_example.word_count table in Cassandra
     wordCounts.foreachRDD(rdd => {
