@@ -6,27 +6,25 @@
  */
 
 
-// Basic Spark imports
 import java.io.FileReader
 import java.util.Properties
+import scala.collection.JavaConversions._
 
+// Basic Spark imports
+import org.apache.spark.streaming.{Seconds, StreamingContext}
 import org.apache.spark.{SparkConf, SparkContext}
-import org.apache.spark.SparkContext._
 
 // Spark SQL Cassandra imports
-import org.apache.spark.sql
-import org.apache.spark.sql.cassandra._
 import com.datastax.spark.connector._
 
 // Spark Streaming + Kafka imports
-import kafka.serializer.StringDecoder // this has to come before streaming.kafka import
-import org.apache.spark.streaming._
-import org.apache.spark.streaming.kafka._
+import org.apache.spark.streaming.kafka010.ConsumerStrategies.Subscribe
+import org.apache.spark.streaming.kafka010.LocationStrategies.PreferConsistent
+import org.apache.spark.streaming.kafka010._
 
 // Cassandra Java driver imports
-import com.datastax.driver.core.{Session, Cluster, Host, Metadata}
-import com.datastax.spark.connector.streaming._
-import scala.collection.JavaConversions._
+import com.datastax.driver.core.Cluster
+
 
 // Date import for processing logic
 import java.util.Date
@@ -37,13 +35,13 @@ object KafkaSparkCassandra {
   def main(args: Array[String]) {
 
     // read the configuration file
-    val sparkConf = new SparkConf().setAppName("KafkaSparkCassandra")
+    val sparkConf = new SparkConf().setAppName("WordCount")
+
 
     // get the values we need out of the config file
-    val kafka_topic = "test"
     val cassandra_host = sparkConf.get("spark.cassandra.connection.host"); //cassandra host
-    val cassandra_user = sparkConf.get("spark.cassandra.auth.username");
-    val cassandra_pass = sparkConf.get("spark.cassandra.auth.password");
+    val cassandra_user = sparkConf.get("spark.cassandra.auth.username")
+    val cassandra_pass = sparkConf.get("spark.cassandra.auth.password")
 
     // connect directly to Cassandra from the driver to create the keyspace
     val cluster = Cluster.builder().addContactPoint(cassandra_host).withCredentials(cassandra_user, cassandra_pass).build()
@@ -56,7 +54,10 @@ object KafkaSparkCassandra {
     // Create spark streaming context with 5 second batch interval
     val ssc = new StreamingContext(sparkConf, Seconds(5))
 
-    // create a timer that we will use to stop the processing after 30 seconds so we can print some results
+    // Set the logging level to reduce log message spam
+    ssc.sparkContext.setLogLevel("ERROR")
+
+    // create a timer that we will use to stop the processing after 60 seconds so we can print some results
     val timer = new Thread() {
       override def run() {
         Thread.sleep(1000 * 30)
@@ -64,35 +65,40 @@ object KafkaSparkCassandra {
       }
     }
 
-    // Create direct kafka stream with brokers and topics
-    val topicsSet = Set[String] (kafka_topic)
+    // load the kafka.properties file
     val kafkaProps = new Properties()
     kafkaProps.load(new FileReader("kafka.properties"))
     val kafkaParams = kafkaProps.toMap[String, String]
-    val messages = KafkaUtils.createDirectStream[String, String, StringDecoder, StringDecoder](
-      ssc, kafkaParams, topicsSet)
+    println(kafkaParams)
+
+    // Create direct Kafka stream on the wordcount-input topic
+    val topicsSet = Set[String]("wordcount-input")
+    val messages = KafkaUtils.createDirectStream(ssc,PreferConsistent,Subscribe[String,String](topicsSet,kafkaParams))
 
     // Create the processing logic
     // the spark processing isn't actually run until the streaming context is started
     // it will then run once for each batch interval
 
     // Get the lines, split them into words, count the words and print
-    val wordCounts = messages.map(_._2) // split the message into lines
+    val wordCounts = messages.map(_.value) // split the message into lines
       .flatMap(_.split(" ")) //split into words
-      .filter(w => (w.length() > 0)) // remove any empty words caused by double spaces
+      .filter(w => w.length() > 0) // remove any empty words caused by double spaces
       .map(w => (w, 1L)).reduceByKey(_ + _) // count by word
-      .map({case (w,c) => (w,new Date().getTime(),c)}) // add the current time to the tuple for saving
+      .map({case (w,c) => (w,new Date().getTime,c)}) // add the current time to the tuple for saving
 
     wordCounts.print() //print it so we can see something is happening
 
-    // insert the records from  rdd to the ic_example.word_count table in Cassandra
-    // SomeColumns() is a helper class from the cassandra connector that allows the fields of the rdd to be mapped to the columns in the table
-    wordCounts.saveToCassandra("ic_example", "word_count", SomeColumns("word" as "_1", "ts" as "_2", "count" as "_3"))
+    // Specify the structure of each word count object so it can be saved to Cassandra
+//    case class WordCount(word:String,ts:Long,count:Int)
 
+    // Save each RDD to the ic_example.word_count table in Cassandra
+    wordCounts.foreachRDD(rdd => {
+      rdd.saveToCassandra("ic_example","word_count")
+    })
 
     // Now we have set up the processing logic it's time to do some processing
     ssc.start() // start the streaming context
-    timer.start() // start the thread that will stop the context processing after a while
+    timer.start()
     ssc.awaitTermination() // block while the context is running (until it's stopped by the timer)
     ssc.stop() // this additional stop seems to be required
 
@@ -102,5 +108,6 @@ object KafkaSparkCassandra {
     rdd1.take(100).foreach(println)
     sc.stop()
 
+    System.exit(0)
   }
 }
