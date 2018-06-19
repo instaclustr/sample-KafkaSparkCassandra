@@ -51,6 +51,9 @@ object KafkaSparkCassandra {
     // Create spark streaming context with 5 second batch interval
     val ssc = new StreamingContext(sparkConf, Seconds(5))
 
+    // Set the logging level to reduce log message spam
+    ssc.sparkContext.setLogLevel("ERROR")
+
     // create a timer that we will use to stop the processing after 60 seconds so we can print some results
     val timer = new Thread() {
       override def run() {
