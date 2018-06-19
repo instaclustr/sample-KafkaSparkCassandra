@@ -5,10 +5,9 @@
  *
  */
 
-
+// Imports for loading in the kafka.properties file
 import java.io.FileReader
 import java.util.Properties
-
 import scala.collection.JavaConversions._
 
 // Basic Spark imports
@@ -26,10 +25,8 @@ import org.apache.spark.streaming.kafka010._
 // Cassandra Java driver imports
 import com.datastax.driver.core.Cluster
 
-
 // Date import for processing logic
 import java.util.Date
-
 
 object KafkaSparkCassandra {
 
@@ -53,9 +50,6 @@ object KafkaSparkCassandra {
 
     // Create spark streaming context with 5 second batch interval
     val ssc = new StreamingContext(sparkConf, Seconds(5))
-
-    // Set the logging level to reduce log message spam
-//    ssc.sparkContext.setLogLevel("ERROR")
 
     // create a timer that we will use to stop the processing after 60 seconds so we can print some results
     val timer = new Thread() {
