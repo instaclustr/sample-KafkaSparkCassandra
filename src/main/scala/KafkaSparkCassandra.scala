@@ -1,7 +1,7 @@
 /*
  *
  * Instaclustr (www.instaclustr.com)
- * Kafka, Spark Streaming and Casssandra example
+ * Kafka, Spark Streaming and Cassandra example
  *
  */
 
@@ -66,7 +66,6 @@ object KafkaSparkCassandra {
     val kafkaProps = new Properties()
     kafkaProps.load(new FileReader("kafka.properties"))
     val kafkaParams = kafkaProps.toMap[String, String]
-    println(kafkaParams)
 
     // Create direct Kafka stream on the wordcount-input topic
     val topicsSet = Set[String]("wordcount-input")
