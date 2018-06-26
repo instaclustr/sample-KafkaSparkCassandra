@@ -1,0 +1,13 @@
+bootstrap.servers=<Kafka ip 1>:9092,<Kafka ip 2>:9092,<Kafka ip 3>:9092
+group.id=spark-streaming
+key.deserializer=org.apache.kafka.common.serialization.StringDeserializer
+value.deserializer=org.apache.kafka.common.serialization.StringDeserializer
+ssl.enabled.protocols=TLSv1.2,TLSv1.1,TLSv1
+ssl.truststore.location = truststore.jks
+ssl.truststore.password = instaclustr
+ssl.protocol=TLS
+security.protocol=SASL_SSL
+sasl.mechanism=SCRAM-SHA-256
+sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required \
+   username="ickafka" \
+   password="<Kafka password>";
